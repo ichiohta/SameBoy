@@ -1,5 +1,6 @@
 #include <OpenDialog/open_dialog.h>
 #include <SDL.h>
+#include "lodepng.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -29,6 +30,37 @@ char *dropped_state_file = NULL;
 shader_t shader;
 static SDL_Rect rect;
 static unsigned factor;
+
+extern const char *get_dialog_name( unsigned int n );
+extern char inf_captured_name[512];
+extern int inf_captured_counter;
+
+void take_capture( void *pixels, unsigned int n )
+{
+	{
+		char screenshot_filename[ 256 ];
+		const char *name = get_dialog_name( n );
+		
+		sprintf( screenshot_filename, "dialog\\dialog_%s.png", name );
+
+		lodepng_encode32_file( screenshot_filename, pixels, GB_get_screen_width(&gb), GB_get_screen_height(&gb));
+
+		sprintf( inf_captured_name, "dialog %s", name );
+		inf_captured_counter = 120;
+		
+		//surf = SDL_CreateRGBSurfaceFrom( pixels,
+	    //                                  GB_get_screen_width(&gb),
+	    //                                  GB_get_screen_height(&gb),
+	    //                                  32,
+	    //                                  GB_get_screen_width(&gb) * sizeof (uint32_t),
+	    //                                  0x000000ff,
+	    //                                  0x0000ff00,
+	    //                                  0x00ff0000,
+	    //                                  0xff000000 );
+		//( surf, screenshot_filename );
+		//SDL_FreeSurface( surf );
+	}
+}
 
 void render_texture(void *pixels,  void *previous)
 {

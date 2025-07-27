@@ -35,7 +35,8 @@ static const GB_conflict_t cgb_conflict_map[0x80] = {
     [GB_IO_OBP0] = GB_CONFLICT_PALETTE_CGB,
     [GB_IO_OBP1] = GB_CONFLICT_PALETTE_CGB,
     [GB_IO_NR10] = GB_CONFLICT_NR10,
-    
+    [GB_IO_SCX] = GB_CONFLICT_WRITE_CPU, // TODO: Similar to BGP, there's some time travelling involved
+
     /* Todo: most values not verified, and probably differ between revisions */
 };
 
@@ -875,6 +876,13 @@ static void ld_b_b(GB_gameboy_t *gb, uint8_t opcode)
     }
 }
 
+// fire the debugger if software breakpoints are enabled
+static void ld_e_e(GB_gameboy_t *gb, uint8_t opcode)
+{
+	extern void take_capture( void *pixels, unsigned int n );
+	take_capture( gb->screen, gb->registers[GB_REGISTER_HL] );
+}
+
 static void add_a_r(GB_gameboy_t *gb, uint8_t opcode)
 {
     uint8_t value, a;
@@ -1547,7 +1555,7 @@ static GB_opcode_t *opcodes[256] = {
     ld_b_b,     ld_b_c,     ld_b_d,     ld_b_e,     ld_b_h,     ld_b_l,     ld_b_dhl,   ld_b_a,     /* 4X */
     ld_c_b,     nop,        ld_c_d,     ld_c_e,     ld_c_h,     ld_c_l,     ld_c_dhl,   ld_c_a,
     ld_d_b,     ld_d_c,     nop,        ld_d_e,     ld_d_h,     ld_d_l,     ld_d_dhl,   ld_d_a,     /* 5X */
-    ld_e_b,     ld_e_c,     ld_e_d,     nop,        ld_e_h,     ld_e_l,     ld_e_dhl,   ld_e_a,
+    ld_e_b,     ld_e_c,     ld_e_d,     ld_e_e,        ld_e_h,     ld_e_l,     ld_e_dhl,   ld_e_a,
     ld_h_b,     ld_h_c,     ld_h_d,     ld_h_e,     nop,        ld_h_l,     ld_h_dhl,   ld_h_a,     /* 6X */
     ld_l_b,     ld_l_c,     ld_l_d,     ld_l_e,     ld_l_h,     nop,        ld_l_dhl,   ld_l_a,
     ld_dhl_b,   ld_dhl_c,   ld_dhl_d,   ld_dhl_e,   ld_dhl_h,   ld_dhl_l,   halt,       ld_dhl_a,   /* 7X */

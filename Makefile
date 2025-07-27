@@ -121,17 +121,17 @@ endif
 
 CFLAGS += $(WARNINGS)
 
-CFLAGS += -std=gnu11 -D_GNU_SOURCE -DGB_VERSION='"$(VERSION)"' -I. -D_USE_MATH_DEFINES
+CFLAGS += -D_GNU_SOURCE -DGB_VERSION='"$(VERSION)"' -I. -D_USE_MATH_DEFINES
 ifneq (,$(UPDATE_SUPPORT))
 CFLAGS += -DUPDATE_SUPPORT
 endif
 
 ifeq (,$(PKG_CONFIG))
 SDL_CFLAGS := $(shell sdl2-config --cflags)
-SDL_LDFLAGS := $(shell sdl2-config --libs)
+SDL_LDFLAGS := $(shell sdl2-config --libs) -lpthread
 else
 SDL_CFLAGS := $(shell $(PKG_CONFIG) --cflags sdl2)
-SDL_LDFLAGS := $(shell $(PKG_CONFIG) --libs sdl2)
+SDL_LDFLAGS := $(shell $(PKG_CONFIG) --libs sdl2) -lpthread
 endif
 ifeq (,$(PKG_CONFIG))
 GL_LDFLAGS := -lGL
@@ -207,7 +207,7 @@ all: cocoa sdl tester libretro
 # Get a list of our source files and their respective object file targets
 
 CORE_SOURCES := $(shell ls Core/*.c)
-SDL_SOURCES := $(shell ls SDL/*.c) $(OPEN_DIALOG) SDL/audio/$(SDL_AUDIO_DRIVER).c
+SDL_SOURCES := $(shell ls SDL/*.c) $(shell ls SDL/*.cpp) $(OPEN_DIALOG) SDL/audio/$(SDL_AUDIO_DRIVER).c
 TESTER_SOURCES := $(shell ls Tester/*.c)
 
 ifeq ($(PLATFORM),Darwin)
@@ -242,34 +242,38 @@ endif
 
 $(OBJ)/SDL/%.dep: SDL/%
 	-@$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) $(SDL_CFLAGS) $(GL_CFLAGS) -MT $(OBJ)/$^.o -M $^ -c -o $@
+	$(CC) $(CFLAGS) -std=gnu11 $(SDL_CFLAGS) $(GL_CFLAGS) -MT $(OBJ)/$^.o -M $^ -c -o $@
 
 $(OBJ)/%.dep: %
 	-@$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) -MT $(OBJ)/$^.o -M $^ -c -o $@
+	$(CC) $(CFLAGS) -std=gnu11 -MT $(OBJ)/$^.o -M $^ -c -o $@
 
 # Compilation rules
 
 $(OBJ)/Core/%.c.o: Core/%.c
 	-@$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) $(FAT_FLAGS) -DGB_INTERNAL -c $< -o $@
+	$(CC) $(CFLAGS) -std=gnu11 $(FAT_FLAGS) -DGB_INTERNAL -c $< -o $@
 
 $(OBJ)/SDL/%.c.o: SDL/%.c
+	-@$(MKDIR) -p $(dir $@)
+	$(CC) $(CFLAGS) -std=gnu11 $(FAT_FLAGS) $(SDL_CFLAGS) $(GL_CFLAGS) -c $< -o $@
+
+$(OBJ)/SDL/%.cpp.o: SDL/%.cpp
 	-@$(MKDIR) -p $(dir $@)
 	$(CC) $(CFLAGS) $(FAT_FLAGS) $(SDL_CFLAGS) $(GL_CFLAGS) -c $< -o $@
 
 $(OBJ)/%.c.o: %.c
 	-@$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) $(FAT_FLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -std=gnu11 $(FAT_FLAGS) -c $< -o $@
 	
 # HexFiend requires more flags
 $(OBJ)/HexFiend/%.m.o: HexFiend/%.m
 	-@$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) $(FAT_FLAGS) $(OCFLAGS) -c $< -o $@ -fno-objc-arc -include HexFiend/HexFiend_2_Framework_Prefix.pch
+	$(CC) $(CFLAGS) -std=gnu11 $(FAT_FLAGS) $(OCFLAGS) -c $< -o $@ -fno-objc-arc -include HexFiend/HexFiend_2_Framework_Prefix.pch
 	
 $(OBJ)/%.m.o: %.m
 	-@$(MKDIR) -p $(dir $@)
-	$(CC) $(CFLAGS) $(FAT_FLAGS) $(OCFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -std=gnu11 $(FAT_FLAGS) $(OCFLAGS) -c $< -o $@
 
 # Cocoa Port
 
